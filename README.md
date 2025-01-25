@@ -1,6 +1,11 @@
-# EX-Rates
 
-Small Python client/server app that communicates by gRPC protocol
+# $\color{MidnightBlue}\textit{\textbf{EX-Rates}}$
+
+
+![Python](https://img.shields.io/badge/Python-v%203.7+-lightblue?logo=python) 
+![gRPC](https://img.shields.io/badge/gRPC-v%201.64.1+-blueviolet)
+
+Small Python client/server app that communicates by gRPC protocol and provides currency exchange rates
 
 #### Prerequisites:
 - Python 3.7 or higher
@@ -33,5 +38,3 @@ Run it from the project's root directory:
 python -m grpc_tools.protoc -I./protos --python_out=gen --pyi_out=gen --grpc_python_out=gen protos/ex-rates.proto
  ```
  The generated code drops into *gen* subfolder
-
-
