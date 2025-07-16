@@ -33,8 +33,12 @@ class CurrRatesSvc(ex_rates_pb2_grpc.ExRatesSvc):
             if (specificRates == None):
                 print("Requesting from remote service for", request.currency_code, "...")
                 jsData = self.requestFromRemote(request.currency_code)
-                specificRates = self.fillRatesFromJs(jsData, request.currency_code)
-                print("Received!")
+                if jsData.get("result") == "success":
+                    specificRates = self.fillRatesFromJs(jsData, request.currency_code)
+                    print("Received successfully!")
+                else:
+                    specificRates = ex_rates_pb2.Rates()
+                    print("Something went wrong :(")
             else:
                 print("Obtained from cache for", request.currency_code)
             return specificRates;

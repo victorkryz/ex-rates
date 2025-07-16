@@ -15,9 +15,12 @@ def run(code: str):
     with grpc.insecure_channel("localhost:50051") as channel:
         stub = ex_rates_pb2_grpc.ExRatesSvcStub(channel)
         response = stub.GetRates(ex_rates_pb2.Request(currency_code=code))
-        print(code, "rates received:")
-        for item in response.entries:
-            print(item.currency + ":",  item.value)     
+        if len(response.entries) != 0:
+            print(code, "rates received:")
+            for item in response.entries:
+                print(item.currency + ":",  item.value)     
+        else:
+            print("There are no rates for", code)     
     
 
 if __name__ == "__main__":
