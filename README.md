@@ -9,6 +9,8 @@ Small Python client/server app that communicates by gRPC protocol and provides c
 
 #### Prerequisites:
 - Python 3.7 or higher
+- Install Requests library (pip install requests)
+- Install google protobuf (pip install protobuf)
 - Install gRPC Python scaffold (*grpcio*, *grpcio-tools*) as it described in 
 [*gRPC tutorial*](https://grpc.io/docs/languages/python/quickstart).
 
@@ -20,11 +22,14 @@ Small Python client/server app that communicates by gRPC protocol and provides c
     ```
      python ex_rates_svc.py
     ```
+    Service listens port 50051
 
--   Run the client providing *currency code* like USD, EUR, UAH, GBP, etc. as a command line parameter:
+-   Run the client providing *currency code* like USD, EUR, UAH, GBP, etc. as a command line parameter,
+    and optionally ip address of host where ex_rates_svc.py is launched (by default: localhost:50051)
 
     ```
-     python ex_rates_clnt.py USD
+     python ex_rates_clnt.py --code USD
+     python ex_rates_clnt.py --code EUR --host ex-rates-service-ip:port
     ```
     The client prints the rates of the specified currency against to others
 
