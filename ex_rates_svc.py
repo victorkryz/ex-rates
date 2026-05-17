@@ -38,16 +38,17 @@ class AuthTokenValidationInterceptor(grpc.ServerInterceptor):
 
 
 REMOTE_REQUEST_REF_TEMPLATE = 'https://open.er-api.com/v6/latest/{}'
+CACHE_TTL_SECONDS = 1800 # 30 minutes
 
 class CurrRatesSvc(ex_rates_pb2_grpc.ExRatesSvc):
 
         rates = {}
+        rates_timestamp = {}
 
         def __init__(self):
             pass
 
         def GetRates(self, request, context) -> ex_rates_pb2.Rates:
-            # TODO: Refresh cache periodically (e.g. limit keeping some rates by time)
             specificRates = self.getFromCache(request.currency_code)
             if (specificRates == None):
                 print("Requesting from remote service for", request.currency_code, "...")
@@ -68,6 +69,7 @@ class CurrRatesSvc(ex_rates_pb2_grpc.ExRatesSvc):
             if jsRates:
                     specificRates = ex_rates_pb2.Rates()
                     self.rates[currency] = specificRates
+                    self.rates_timestamp[currency] = time.monotonic()
                     for element in jsRates.items():
                         specificRates.entries.append(ex_rates_pb2.Rates.Rate(currency=element[0], value=element[1]))
             else:
@@ -79,7 +81,17 @@ class CurrRatesSvc(ex_rates_pb2_grpc.ExRatesSvc):
             return (val != None)
         
         def getFromCache(self, currency) -> ex_rates_pb2.Rates:
-            return self.rates.get(currency, None)
+            specificRates = self.rates.get(currency, None)
+            if specificRates == None:
+                return None
+
+            cachedAt = self.rates_timestamp.get(currency, 0)
+            if time.monotonic() - cachedAt > CACHE_TTL_SECONDS:
+                self.rates.pop(currency, None)
+                self.rates_timestamp.pop(currency, None)
+                return None
+
+            return specificRates
 
         def printData(self, jsData):
              for element in jsData["rates"].items():
@@ -108,5 +120,4 @@ def serve():
 if __name__ == "__main__":
     logging.basicConfig()
     serve()
-
 
