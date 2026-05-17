@@ -18,6 +18,25 @@ sys.path.append('gen');
 from gen import ex_rates_pb2
 from gen import ex_rates_pb2_grpc
 
+_AUTH_HEADER_KEY = "authorization"
+_AUTH_HEADER_VALUE = "Bearer ex_rate_token"
+
+
+class AuthTokenValidationInterceptor(grpc.ServerInterceptor):
+    def __init__(self):
+        def abort(ignored_request, context):
+            context.abort(grpc.StatusCode.UNAUTHENTICATED, "Invalid authorization token")
+
+        self._abort_handler = grpc.unary_unary_rpc_method_handler(abort)
+
+    def intercept_service(self, continuation, handler_call_details):
+        expected_metadata = (_AUTH_HEADER_KEY, _AUTH_HEADER_VALUE)
+        if expected_metadata in handler_call_details.invocation_metadata:
+            return continuation(handler_call_details)
+        else:
+            return self._abort_handler
+
+
 REMOTE_REQUEST_REF_TEMPLATE = 'https://open.er-api.com/v6/latest/{}'
 
 class CurrRatesSvc(ex_rates_pb2_grpc.ExRatesSvc):
@@ -75,7 +94,10 @@ class CurrRatesSvc(ex_rates_pb2_grpc.ExRatesSvc):
 
 def serve():
     port = "50051"
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    server = grpc.server(
+        futures.ThreadPoolExecutor(max_workers=10),
+        interceptors=(AuthTokenValidationInterceptor(),)
+    )
     ex_rates_pb2_grpc.add_ExRatesSvcServicer_to_server(CurrRatesSvc(), server)
     server.add_insecure_port("[::]:" + port)
     server.start()
