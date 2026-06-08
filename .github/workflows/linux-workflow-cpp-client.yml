@@ -1,0 +1,103 @@
+
+name: Linux, install, launch, test, cpp client
+
+on:
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+  BUILD_DIRECTORY: build
+  INSTALL_DIRECTORY: dist
+  CPP_CLIENT_APP_NAME: ex_rates_clnt
+  CPP_CLIENT_DIRECTORY: client/cpp
+  GENERATED_DIRECTORY: generated
+
+jobs:
+  install_launch:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install gRPC
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libgrpc++-dev \
+          protobuf-compiler-grpc \
+          protobuf-compiler
+
+    - name: Install dependencies
+      working-directory: ${{github.workspace}}
+      run: |
+        sudo apt install python3.12-venv
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install requests
+        pip install protobuf
+        pip install grpcio-tools
+        pip install grpcio
+        pip show grpcio
+        pip show grpcio-tools
+        deactivate
+
+    - name: Regenarate gRPC code
+      working-directory: ${{github.workspace}}   
+      run: |
+        source venv/bin/activate
+        rm -r gen
+        mkdir gen
+        python3 -m grpc_tools.protoc -I./protos --python_out=gen --pyi_out=gen --grpc_python_out=gen protos/ex-rates.proto
+        ls -l gen
+        deactivate
+
+    - name: Configure CMake
+      working-directory: ${{github.workspace}}/${{env.CPP_CLIENT_DIRECTORY}}
+      run: cmake -S. -B ${{env.BUILD_DIRECTORY}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DUSE_SYSTEM_PROTOBUF=ON
+
+    - name: Build C++ client
+      working-directory: ${{github.workspace}}/${{env.CPP_CLIENT_DIRECTORY}}  
+      run: |
+        mkdir -p ${{env.BUILD_DIRECTORY}}/${{env.GENERATED_DIRECTORY}}
+        cmake --build ${{env.BUILD_DIRECTORY}}
+
+    - name: Install C++ client
+      working-directory: ${{github.workspace}}/${{env.CPP_CLIENT_DIRECTORY}}  
+      run: cmake --install ${{env.BUILD_DIRECTORY}} --prefix ${{github.workspace}}/${{env.INSTALL_DIRECTORY}}
+
+    - name: Run ${{env.CPP_CLIENT_APP_NAME}}
+      working-directory: ${{github.workspace}}/${{env.INSTALL_DIRECTORY}}
+      run: bin/${{env.CPP_CLIENT_APP_NAME}} --help
+  
+    - name: Run server and client
+      working-directory: ${{github.workspace}}
+      run: |
+        source venv/bin/activate
+        export PYTHONPATH="$PWD:$PWD/gen"
+        python3 server/ex_rates_svc.py > server.log 2>&1 &
+        sleep 3
+        cd ${{github.workspace}}/${{env.INSTALL_DIRECTORY}}
+        bin/${{env.CPP_CLIENT_APP_NAME}} --code UAH
+        deactivate
+
+    - name: Test server and CPP client
+      working-directory: ${{github.workspace}}
+      run: |
+        source venv/bin/activate
+        export PYTHONPATH="$PWD:$PWD/gen"
+        python3 server/ex_rates_svc.py > server.log 2>&1 &
+        sleep 3
+        cd ${{github.workspace}}/${{env.INSTALL_DIRECTORY}} 
+        export USD_RATE=$(bin/${{env.CPP_CLIENT_APP_NAME}} --code USD | grep 'USD:' | awk -F ' ' '{print $2}')
+        deactivate
+        echo $USD_RATE
+        if [[ "${USD_RATE}" == "1.0" ]]; then
+           exit 0
+        else
+           exit 1
+        fi  
+
+    
+
+
+
