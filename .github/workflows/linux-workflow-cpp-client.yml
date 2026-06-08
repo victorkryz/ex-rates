@@ -1,5 +1,5 @@
 
-name: Linux, install, launch, test, cpp client
+name: Linux, Server run and C++ Client Test
 
 on:
   workflow_dispatch:
@@ -91,13 +91,10 @@ jobs:
         export USD_RATE=$(bin/${{env.CPP_CLIENT_APP_NAME}} --code USD | grep 'USD:' | awk -F ' ' '{print $2}')
         deactivate
         echo $USD_RATE
-        if [[ "${USD_RATE}" == "1.0" ]]; then
+        if [[ "${USD_RATE}" == "1.0"  || "${USD_RATE}" == "1" ]]; then
            exit 0
         else
            exit 1
         fi  
 
     
-
-
-
