@@ -4,8 +4,23 @@
 
 ![Python](https://img.shields.io/badge/Python-v%203.7+-lightblue?logo=python) 
 ![gRPC](https://img.shields.io/badge/gRPC-v%201.64.1+-blueviolet)
+![C++](https://img.shields.io/badge/C++-17-purple?logo=C++)
+![cmake](https://img.shields.io/badge/cmake-3.30-brightgreen)
 
-Small Python client/server app that communicates by gRPC protocol and provides currency exchange rates
+
+Ex-Rates is a gRPC-based currency exchange rate service.
+
+The exchange rates are obtained from external exchange-rate providers and returned to clients through a gRPC API.
+
+
+## Features
+- [gRPC server implemented in Python](server)
+- [Protobuf data definition](protos)
+- JSON exchange-rate provider integration
+- Multi-client project structure:
+    - [Python client](client/py)
+    - [C++ client](client/cpp) 
+- [GitHub Actions CI pipeline](.github/workflows)
 
 #### Prerequisites:
 - Python 3.7 or higher
@@ -43,3 +58,12 @@ Run it from the project's root directory:
 python -m grpc_tools.protoc -I./protos --python_out=gen --pyi_out=gen --grpc_python_out=gen protos/ex-rates.proto
  ```
  The generated code drops into *gen* subfolder
+
+
+## Building and Continuous Integration
+
+The project uses GitHub Actions to:
+
+- Run and test the Python client [Python Client GitHub Actions workflow](.github/workflows/linux-workflow-py-client.yml)
+- Build, run and test the C++ client [C++ Client GitHub Actions workflow](.github/workflows/linux-workflow-cpp-client.yml)
+
