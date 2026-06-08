@@ -1,6 +1,5 @@
 
-name: Linux, install, launch, test, py client
-
+name: Linux, Server run and Python Client Test
 on:
   workflow_dispatch:
 
