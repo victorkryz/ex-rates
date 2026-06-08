@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
             for (const auto& entry : rates_map)
             {
                 auto [currency, rate] = entry;
-                std::cout << currency << " " << rate << std::endl;
+                std::cout << currency << ": " << rate << std::endl;
             }
         }
         else
